@@ -1,0 +1,95 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# IntelliCover AI – Backend Dependencies
+# ──────────────────────────────────────────────────────────────────────────────
+# Install with:  pip install -r requirements.txt
+# Python >= 3.10 required
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Web Framework ─────────────────────────────────────────────────────────────
+fastapi
+uvicorn[standard]
+python-multipart           # Required for UploadFile / Form
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy==2.0.36
+asyncpg==0.30.0                    # Async PostgreSQL driver (FastAPI)
+psycopg2-binary==2.9.11            # Sync PostgreSQL driver (Celery worker)
+alembic==1.14.0                    # Database migrations
+
+# ── Settings & Config ─────────────────────────────────────────────────────────
+pydantic
+pydantic-settings
+
+# ── Auth & Security ───────────────────────────────────────────────────────────
+python-jose[cryptography]   # JWT encoding/decoding
+passlib[bcrypt]             # Password hashing
+
+# ── Task Queue ────────────────────────────────────────────────────────────────
+celery
+redis                       # Redis client for Celery broker/backend
+flower                      # Celery monitoring UI (optional)
+
+# ── HTTP Client & Scraping ────────────────────────────────────────────────────
+httpx                       # Async HTTP client
+beautifulsoup4              # HTML parsing
+lxml                        # Faster HTML parser for BS4
+playwright                  # Headless browser fallback for JS-heavy sites
+
+# ── PDF Processing ────────────────────────────────────────────────────────────
+pymupdf                    # (import as `fitz`) – PDF text extraction
+
+# ── NLP / ML Core ────────────────────────────────────────────────────────────
+spacy                       # NLP + NER (download model separately)
+# python -m spacy download en_core_web_lg
+
+sentence-transformers       # Semantic embedding (all-MiniLM-L6-v2)
+numpy                      # For cosine similarity computation
+
+# ── LLM Inference ────────────────────────────────────────────────────────────
+# We use the HuggingFace Inference API (HTTP) instead of loading models locally.
+# No torch / transformers / accelerate / peft needed at runtime.
+# httpx (listed in HTTP Client section above) handles the API calls.
+#
+# If you ever want to switch back to local models, uncomment these:
+# transformers
+# torch
+# accelerate
+# peft
+# bitsandbytes  # (requires CUDA GPU)
+
+# ── AWS / Cloud Storage ───────────────────────────────────────────────────────
+boto3                     # AWS SDK for S3 file storage
+
+# ── Structured Logging ────────────────────────────────────────────────────────
+structlog
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+pytest
+pytest-asyncio
+httpx                      # Also used as async test client
+pytest-cov                  # Code coverage
+
+# ── Code Quality ─────────────────────────────────────────────────────────────
+ruff                        # Linting + formatting (replaces black + flake8)
+# ── Evaluation & Metrics (for Academic Paper) ────────────────────────────
+scikit-learn                # ML metrics, baseline models
+scipy                       # Statistical functions
+pandas                      # Data manipulation and statistics
+tabulate                    # Table formatting (for markdown/latex)
+
+# ── Visualization ────────────────────────────────────────────────────────
+matplotlib                  # Core plotting library
+seaborn                     # Statistical visualizations
+wordcloud                   # Word cloud generation
+
+# ── NLP Metrics ──────────────────────────────────────────────────────────
+bert-score                  # BERTScore metric
+rouge-score                 # ROUGE metric
+nltk                        # BLEU and tokenization
+
+# ── Explainable AI (XAI) ─────────────────────────────────────────────────
+shap                        # SHAP explanations
+lime                        # LIME explanations
+
+# ── Word Embeddings (for baselines) ──────────────────────────────────────
+gensim                      # Word2Vec and embedding models

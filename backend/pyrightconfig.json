@@ -1,0 +1,9 @@
+{
+  "pythonVersion": "3.11",
+  "venvPath": ".",
+  "venv": "venv",
+  "include": ["app", "tests"],
+  "exclude": ["venv", "__pycache__", ".pytest_cache", "htmlcov"],
+  "extraPaths": ["."],
+  "typeCheckingMode": "basic"
+}

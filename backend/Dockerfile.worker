@@ -1,0 +1,53 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Dockerfile.worker – Celery AI/NLP Worker
+# ──────────────────────────────────────────────────────────────────────────────
+# Heavier image that includes PyTorch, transformers, and spaCy.
+# For GPU support, swap the FROM line to an NVIDIA CUDA image.
+# 
+# CPU build:  docker build -f Dockerfile.worker -t intellicover-worker .
+# GPU build:  docker build -f Dockerfile.worker --build-arg BASE=nvidia/cuda:12.1.0-runtime-ubuntu22.04 -t intellicover-worker-gpu .
+# ──────────────────────────────────────────────────────────────────────────────
+
+FROM python:3.11-slim AS base
+
+# System dependencies (includes what PyTorch needs)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    libpq-dev \
+    curl \
+    git \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Playwright system dependencies
+RUN pip install playwright && playwright install-deps chromium
+
+RUN useradd --create-home --shell /bin/bash appuser
+WORKDIR /app
+
+# ── Install ALL dependencies (including ML) ───────────────────────────────────
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# ── Download spaCy model (baked into image for fast startup) ──────────────────
+RUN python -m spacy download en_core_web_lg
+
+# ── Install Playwright browsers ───────────────────────────────────────────────
+RUN playwright install chromium
+
+# ── Copy application code ─────────────────────────────────────────────────────
+COPY app/ ./app/
+
+# Model cache directory (mount as volume in production to persist model weights)
+RUN mkdir -p logs uploads model_cache && chown -R appuser:appuser /app
+
+USER appuser
+
+# The Celery worker entrypoint
+# --concurrency=1 is important: ML models are memory-hungry, one task at a time
+CMD ["celery", "-A", "app.worker.celery_app", "worker", "--loglevel=info", "--concurrency=1", "--events"]

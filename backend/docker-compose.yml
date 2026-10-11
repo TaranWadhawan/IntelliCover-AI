@@ -1,0 +1,105 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# IntelliCover AI – Local Development Docker Compose
+# ──────────────────────────────────────────────────────────────────────────────
+# Start everything with: docker-compose up
+# Stop with: docker-compose down
+# Reset DB: docker-compose down -v   (WARNING: deletes DB data)
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL Database ──────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: intellicover_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: intellicover
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (Celery Broker + Result Backend) ─────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: intellicover_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI Application ────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: intellicover_api
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/intellicover
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      DEBUG: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app       # Live code reload in development
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ── Celery AI Worker ──────────────────────────────────────────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: intellicover_worker
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/intellicover
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    volumes:
+      - ./app:/app/app
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+      - model_cache:/app/model_cache    # Persist downloaded model weights
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.worker.celery_app worker --loglevel=info --concurrency=1
+
+  # ── Flower – Celery Monitoring UI ─────────────────────────────────────────
+  flower:
+    image: mher/flower:2.0.0
+    container_name: intellicover_flower
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      FLOWER_PORT: 5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+  uploads_data:
+  logs_data:
+  model_cache:    # Persistent volume for HuggingFace model weights

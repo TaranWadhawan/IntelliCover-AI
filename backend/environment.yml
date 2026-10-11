@@ -1,0 +1,64 @@
+name: pytorch
+channels:
+  - defaults
+  - conda-forge
+  - pytorch
+dependencies:
+  - python=3.10
+  - pip
+
+  # ── Web Framework ──
+  - fastapi
+  - uvicorn
+  - python-multipart
+
+  # ── Database ──
+  - sqlalchemy
+  - asyncpg
+  - alembic
+
+  # ── Settings & Config ──
+  - pydantic
+  - pydantic-settings
+
+  # ── Auth & Security ──
+  - python-jose
+  - passlib
+
+  # ── Task Queue ──
+  - celery
+  - redis
+
+  # ── HTTP Client & Scraping ──
+  - httpx
+  - beautifulsoup4
+  - lxml
+
+  # ── NLP / ML Core ──
+  - spacy
+  - numpy
+
+  # ── LLM Inference ──
+  - transformers
+  - pytorch   # CPU build; use cudatoolkit if GPU
+
+  # ── AWS / Cloud Storage ──
+  - boto3
+
+  # ── Structured Logging ──
+  - structlog
+
+  # ── Testing / Quality ──
+  - pytest
+  - pytest-asyncio
+  - pytest-cov
+  - ruff
+
+  - pip:
+      # pip-only packages
+      - pymupdf
+      - playwright
+      - sentence-transformers
+      - accelerate
+      - peft
+      - flower
